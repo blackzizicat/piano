@@ -2,7 +2,7 @@ import UIKit
 
 /// Piano keyboard (A0...C8) showing 14 white keys (two octaves) at a time.
 /// Touching a key sounds it immediately; dragging horizontally beyond a small
-/// threshold releases that note and scrolls the keyboard instead.
+/// threshold also scrolls the keyboard while the note keeps sounding.
 final class KeyboardView: UIView {
     var onNoteOn: ((Int, Float) -> Void)?
     var onNoteOff: ((Int) -> Void)?
@@ -27,7 +27,6 @@ final class KeyboardView: UIView {
     private var whiteKeys: [Key] = []
     private var blackKeys: [Key] = []
     private var layerByNote = [CALayer?](repeating: nil, count: 128)
-    private var labels: [CATextLayer] = []
     private var pressCount = [Int](repeating: 0, count: 128)
     private var activeTouches: [ObjectIdentifier: TouchInfo] = [:]
 
@@ -68,16 +67,6 @@ final class KeyboardView: UIView {
                 layer.cornerRadius = 4
                 layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
                 whiteKeys.append(Key(note: note, whiteIndex: whiteKeys.count, layer: layer))
-                if note % 12 == 0 {
-                    let text = CATextLayer()
-                    text.string = "C\(note / 12 - 1)"
-                    text.fontSize = 11
-                    text.alignmentMode = .center
-                    text.foregroundColor = UIColor.gray.cgColor
-                    text.contentsScale = UIScreen.main.scale
-                    layer.addSublayer(text)
-                    labels.append(text)
-                }
             }
             updateColor(note: note)
         }
@@ -111,9 +100,6 @@ final class KeyboardView: UIView {
         for key in blackKeys {
             let x = CGFloat(key.whiteIndex + 1) * w - bw / 2 - offset
             key.layer.frame = CGRect(x: x, y: 0, width: bw, height: blackHeight)
-        }
-        for text in labels {
-            text.frame = CGRect(x: 0, y: h - 22, width: w - 1, height: 16)
         }
         CATransaction.commit()
     }
@@ -158,11 +144,10 @@ final class KeyboardView: UIView {
         return whiteKeys[idx].note
     }
 
-    private func press(_ note: Int, at point: CGPoint) {
+    private func press(_ note: Int) {
         pressCount[note] += 1
         if pressCount[note] == 1 {
-            let ratio = Float(min(max(point.y / max(bounds.height, 1), 0), 1))
-            onNoteOn?(note, 0.5 + 0.5 * ratio)
+            onNoteOn?(note, 0.8)
             updateColor(note: note)
         }
     }
@@ -183,7 +168,7 @@ final class KeyboardView: UIView {
             let p = touch.location(in: self)
             let n = note(at: p)
             activeTouches[ObjectIdentifier(touch)] = TouchInfo(note: n, startX: p.x, startOffset: offset, scrolling: false)
-            if let n = n { press(n, at: p) }
+            if let n = n { press(n) }
         }
     }
 
@@ -196,8 +181,6 @@ final class KeyboardView: UIView {
                 setOffset(info.startOffset - (x - info.startX))
             } else if abs(x - info.startX) > KeyboardView.scrollThreshold {
                 info.scrolling = true
-                if let n = info.note { release(n) }
-                info.note = nil
                 info.startX = x
                 info.startOffset = offset
             }
