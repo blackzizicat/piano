@@ -2,28 +2,43 @@ import UIKit
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
-    var window: UIWindow?
-    private let synth = PianoSynth()
+    static let synth = PianoSynth()
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        synth.start()
+        AppDelegate.synth.start()
         application.isIdleTimerDisabled = true
-
-        let window = UIWindow(frame: UIScreen.main.bounds)
-        window.rootViewController = PianoViewController(synth: synth)
-        window.makeKeyAndVisible()
-        self.window = window
         return true
     }
 
-    func applicationDidBecomeActive(_ application: UIApplication) {
-        synth.recover()
+    func application(_ application: UIApplication,
+                     configurationForConnecting connectingSceneSession: UISceneSession,
+                     options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        let config = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        config.delegateClass = SceneDelegate.self
+        return config
     }
 
     func application(_ application: UIApplication,
                      supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         .landscape
+    }
+}
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession,
+               options connectionOptions: UIScene.ConnectionOptions) {
+        guard let windowScene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: windowScene)
+        window.rootViewController = PianoViewController(synth: AppDelegate.synth)
+        window.makeKeyAndVisible()
+        self.window = window
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        AppDelegate.synth.recover()
     }
 }
 

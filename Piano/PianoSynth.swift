@@ -35,6 +35,7 @@ final class PianoSynth {
     private let engine = AVAudioEngine()
     private var sourceNode: AVAudioSourceNode?
     private var isConfigured = false
+    private var observers: [NSObjectProtocol] = []
     private let setupQueue = DispatchQueue(label: "piano.synth.setup", qos: .userInteractive)
 
     init() {
@@ -78,12 +79,19 @@ final class PianoSynth {
         setupQueue.async { [weak self] in self?.startOnQueue() }
 
         let nc = NotificationCenter.default
-        nc.addObserver(self, selector: #selector(recover), name: AVAudioSession.interruptionNotification, object: nil)
-        nc.addObserver(self, selector: #selector(recover), name: AVAudioSession.mediaServicesWereResetNotification, object: nil)
-        nc.addObserver(self, selector: #selector(recover), name: .AVAudioEngineConfigurationChange, object: engine)
+        let names: [(Notification.Name, AnyObject?)] = [
+            (AVAudioSession.interruptionNotification, nil),
+            (AVAudioSession.mediaServicesWereResetNotification, nil),
+            (.AVAudioEngineConfigurationChange, engine),
+        ]
+        for (name, object) in names {
+            observers.append(nc.addObserver(forName: name, object: object, queue: nil) { [weak self] _ in
+                self?.recover()
+            })
+        }
     }
 
-    @objc func recover() {
+    func recover() {
         setupQueue.async { [weak self] in self?.startOnQueue() }
     }
 

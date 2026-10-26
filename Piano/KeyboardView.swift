@@ -29,6 +29,7 @@ final class KeyboardView: UIView {
     private var layerByNote = [CALayer?](repeating: nil, count: 128)
     private var pressCount = [Int](repeating: 0, count: 128)
     private var activeTouches: [ObjectIdentifier: TouchInfo] = [:]
+    private var scrollDriver: ObjectIdentifier?   // only one finger drives scrolling at a time
 
     private var offset: CGFloat = 0
     private var didSetInitialOffset = false
@@ -178,11 +179,12 @@ final class KeyboardView: UIView {
             guard var info = activeTouches[id] else { continue }
             let x = touch.location(in: self).x
             if info.scrolling {
-                setOffset(info.startOffset - (x - info.startX))
+                if scrollDriver == id { setOffset(info.startOffset - (x - info.startX)) }
             } else if abs(x - info.startX) > KeyboardView.scrollThreshold {
                 info.scrolling = true
                 info.startX = x
                 info.startOffset = offset
+                scrollDriver = id
             }
             activeTouches[id] = info
         }
@@ -199,6 +201,7 @@ final class KeyboardView: UIView {
     private func finish(_ touches: Set<UITouch>) {
         for touch in touches {
             let id = ObjectIdentifier(touch)
+            if scrollDriver == id { scrollDriver = nil }
             if let info = activeTouches.removeValue(forKey: id), let n = info.note {
                 release(n)
             }
