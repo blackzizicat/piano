@@ -47,7 +47,7 @@ final class KeyboardView: UIView {
     private var lastSize: CGSize = .zero
 
     private var whiteWidth: CGFloat { bounds.width / KeyboardView.visibleWhiteKeys }
-    private var blackWidth: CGFloat { whiteWidth * 0.58 }
+    private var blackWidth: CGFloat { whiteWidth * 0.65 }
     private var blackHeight: CGFloat { bounds.height * 0.63 }
     private var feltHeight: CGFloat { max(4, bounds.height * 0.025) }
     private var maxOffset: CGFloat {
