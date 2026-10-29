@@ -49,7 +49,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 }
 
 final class PianoViewController: UIViewController {
-    private static let barHeight: CGFloat = 44
+    private static let barHeight: CGFloat = 28
 
     private let synth: PianoSynth
     private let midi: MIDIOutput
@@ -119,9 +119,9 @@ final class PianoViewController: UIViewController {
         let barHeight = PianoViewController.barHeight
         bar.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: barHeight)
         settingsButton.frame = CGRect(x: view.bounds.width - safe.right - 44, y: 0, width: 44, height: barHeight)
-        let buttonSize = CGSize(width: 52, height: barHeight - 10)
-        octaveDownButton.frame = CGRect(origin: CGPoint(x: safe.left + 8, y: 5), size: buttonSize)
-        octaveUpButton.frame = CGRect(origin: CGPoint(x: safe.left + 8 + buttonSize.width + 4, y: 5), size: buttonSize)
+        let buttonSize = CGSize(width: 40, height: barHeight - 6)
+        octaveDownButton.frame = CGRect(origin: CGPoint(x: safe.left + 8, y: 3), size: buttonSize)
+        octaveUpButton.frame = CGRect(origin: CGPoint(x: safe.left + 8 + buttonSize.width + 4, y: 3), size: buttonSize)
         // The keyboard spans the full screen width so exactly two octaves fill the display.
         keyboard.frame = CGRect(x: 0, y: barHeight,
                                 width: view.bounds.width,
