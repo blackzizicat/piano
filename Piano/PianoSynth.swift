@@ -35,6 +35,7 @@ final class PianoSynth {
     private let engine = AVAudioEngine()
     private var sourceNode: AVAudioSourceNode?
     private var isConfigured = false
+    private var isSuspended = false   // accessed only on setupQueue
     private var observers: [NSObjectProtocol] = []
     private let setupQueue = DispatchQueue(label: "piano.synth.setup", qos: .userInteractive)
 
@@ -92,13 +93,35 @@ final class PianoSynth {
     }
 
     func recover() {
-        setupQueue.async { [weak self] in self?.startOnQueue() }
+        setupQueue.async { [weak self] in
+            guard let self = self, !self.isSuspended else { return }
+            self.startOnQueue()
+        }
+    }
+
+    /// Restarts audio after `suspend()`.
+    func resume() {
+        setupQueue.async { [weak self] in
+            self?.isSuspended = false
+            self?.startOnQueue()
+        }
+    }
+
+    /// Stops the engine while the app is in the background to save battery.
+    func suspend() {
+        setupQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.isSuspended = true
+            self.engine.stop()
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 
     private func startOnQueue() {
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playback, mode: .default, options: [])
+            // Mix with other apps so a synth app receiving our MIDI keeps playing.
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setPreferredSampleRate(48000)
             try session.setPreferredIOBufferDuration(0.005)
             try session.setActive(true)

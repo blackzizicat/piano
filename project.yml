@@ -16,6 +16,8 @@ targets:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UIRequiresFullScreen: true
+        UIBackgroundModes: [audio]
+        NSBluetoothAlwaysUsageDescription: Used to connect to Bluetooth MIDI devices.
         UIStatusBarHidden: true
         UIViewControllerBasedStatusBarAppearance: true
         UISupportedInterfaceOrientations:

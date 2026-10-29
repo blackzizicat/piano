@@ -3,3 +3,5 @@ xcuserdata/
 DerivedData/
 .DS_Store
 Piano/Info.plist
+xcodegen/
+xcodegen.zip
