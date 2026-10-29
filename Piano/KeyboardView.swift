@@ -11,6 +11,7 @@ final class KeyboardView: UIView {
         let note: Int
         let isBlack: Bool
         let whiteIndex: Int            // white key: own index; black key: index of the white key to its left
+        let shift: CGFloat             // black key: horizontal offset from the white-key boundary, in white-key widths
         let container = CALayer()      // positioned layer; carries the drop shadow for black keys
         let body = CAGradientLayer()
         let face = CAGradientLayer()   // top surface of a black key
@@ -20,6 +21,7 @@ final class KeyboardView: UIView {
             self.note = note
             self.isBlack = isBlack
             self.whiteIndex = whiteIndex
+            shift = KeyboardView.blackKeyShift[note % 12] ?? 0
         }
     }
 
@@ -48,8 +50,15 @@ final class KeyboardView: UIView {
     private var lastSize: CGSize = .zero
 
     private var whiteWidth: CGFloat { bounds.width / KeyboardView.visibleWhiteKeys }
-    private var blackWidth: CGFloat { whiteWidth * 0.65 }
-    private var blackHeight: CGFloat { bounds.height * 0.63 }
+    private var blackWidth: CGFloat { whiteWidth * 0.63 }
+    private var blackHeight: CGFloat { bounds.height * 0.61 }
+
+    /// Black keys sit off-center like on a real piano: C#/F# lean left, D#/A# lean right.
+    private static let blackKeyShift: [Int: CGFloat] = [1: -0.075, 3: 0.075, 6: -0.07, 8: 0, 10: 0.07]
+
+    private func blackKeyX(_ key: Key) -> CGFloat {
+        (CGFloat(key.whiteIndex + 1) + key.shift) * whiteWidth - blackWidth / 2
+    }
     private var feltHeight: CGFloat { max(4, bounds.height * 0.025) }
     private var maxOffset: CGFloat {
         max(0, CGFloat(whiteKeys.count) * whiteWidth - bounds.width)
@@ -184,9 +193,8 @@ final class KeyboardView: UIView {
         for key in whiteKeys {
             key.container.frame.origin = CGPoint(x: CGFloat(key.whiteIndex) * w - offset + 0.5, y: 0)
         }
-        let bw = blackWidth
         for key in blackKeys {
-            key.container.frame.origin = CGPoint(x: CGFloat(key.whiteIndex + 1) * w - bw / 2 - offset, y: 0)
+            key.container.frame.origin = CGPoint(x: blackKeyX(key) - offset, y: 0)
         }
         CATransaction.commit()
     }
@@ -241,7 +249,7 @@ final class KeyboardView: UIView {
         if point.y < blackHeight {
             let bw = blackWidth
             for key in blackKeys {
-                let x = CGFloat(key.whiteIndex + 1) * w - bw / 2
+                let x = blackKeyX(key)
                 if cx >= x && cx < x + bw { return key.note }
             }
         }
