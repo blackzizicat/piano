@@ -96,12 +96,12 @@ final class PianoViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let safe = view.safeAreaInsets
-        let width = view.bounds.width - safe.left - safe.right
         let barHeight = PianoViewController.barHeight
         bar.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: barHeight)
         settingsButton.frame = CGRect(x: view.bounds.width - safe.right - 44, y: 0, width: 44, height: barHeight)
-        keyboard.frame = CGRect(x: safe.left, y: barHeight,
-                                width: width,
+        // The keyboard spans the full screen width so exactly two octaves fill the display.
+        keyboard.frame = CGRect(x: 0, y: barHeight,
+                                width: view.bounds.width,
                                 height: view.bounds.height - barHeight)
     }
 

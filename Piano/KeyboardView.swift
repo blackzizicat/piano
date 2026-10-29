@@ -68,6 +68,7 @@ final class KeyboardView: UIView {
         backgroundColor = UIColor(white: 0.08, alpha: 1)
         isMultipleTouchEnabled = true
         isExclusiveTouch = false
+        clipsToBounds = true
 
         let bottomCorners: CACornerMask = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         let blackPitchClasses: Set<Int> = [1, 3, 6, 8, 10]
