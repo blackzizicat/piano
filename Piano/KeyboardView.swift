@@ -14,6 +14,7 @@ final class KeyboardView: UIView {
         let container = CALayer()      // positioned layer; carries the drop shadow for black keys
         let body = CAGradientLayer()
         let face = CAGradientLayer()   // top surface of a black key
+        var label: CATextLayer?        // octave name on C keys
 
         init(note: Int, isBlack: Bool, whiteIndex: Int) {
             self.note = note
@@ -95,6 +96,16 @@ final class KeyboardView: UIView {
                 blackKeys.append(key)
             } else {
                 key.body.cornerRadius = 3
+                if note % 12 == 0 {
+                    let label = CATextLayer()
+                    label.string = "C\(note / 12 - 1)"
+                    label.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+                    label.foregroundColor = gray(0.72)
+                    label.alignmentMode = .center
+                    label.contentsScale = UIScreen.main.scale
+                    key.container.addSublayer(label)
+                    key.label = label
+                }
                 whiteKeys.append(key)
             }
             keyByNote[note] = key
@@ -144,6 +155,11 @@ final class KeyboardView: UIView {
         for key in whiteKeys {
             key.container.bounds = CGRect(origin: .zero, size: whiteSize)
             key.body.frame = key.container.bounds
+            if let label = key.label {
+                let fontSize = min(whiteSize.width * 0.3, 22)
+                label.fontSize = fontSize
+                label.frame = CGRect(x: 0, y: whiteSize.height - fontSize * 2, width: whiteSize.width, height: fontSize * 1.3)
+            }
         }
         let blackSize = CGSize(width: blackWidth, height: blackHeight)
         for key in blackKeys {
@@ -156,9 +172,14 @@ final class KeyboardView: UIView {
         CATransaction.commit()
     }
 
-    private func layoutKeys() {
+    private func layoutKeys(animated: Bool = false) {
         CATransaction.begin()
-        CATransaction.setDisableActions(true)
+        if animated {
+            CATransaction.setAnimationDuration(0.2)
+            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeOut))
+        } else {
+            CATransaction.setDisableActions(true)
+        }
         let w = whiteWidth
         for key in whiteKeys {
             key.container.frame.origin = CGPoint(x: CGFloat(key.whiteIndex) * w - offset + 0.5, y: 0)
@@ -170,11 +191,21 @@ final class KeyboardView: UIView {
         CATransaction.commit()
     }
 
-    private func setOffset(_ value: CGFloat) {
+    private func setOffset(_ value: CGFloat, animated: Bool = false) {
         let clamped = min(max(value, 0), maxOffset)
         if clamped == offset { return }
         offset = clamped
-        layoutKeys()
+        layoutKeys(animated: animated)
+    }
+
+    /// Moves the visible range by one octave (7 white keys) per step, snapping to C.
+    func shiftOctave(by steps: Int) {
+        let octave = whiteWidth * 7
+        guard octave > 0 else { return }
+        // White index of the first C is 2 (A0, B0, C1...).
+        let firstC = whiteWidth * 2
+        let current = ((offset - firstC) / octave).rounded()
+        setOffset(firstC + (current + CGFloat(steps)) * octave, animated: true)
     }
 
     private func updateAppearance(note: Int) {
